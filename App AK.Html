@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trợ lý Kinesiology Tổng hợp - Phiên bản cuối cùng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; background-color: #f8fafc; }
+        .tab-button { transition: all 0.3s ease; }
+        .tab-button.active { border-color: #0d9488; color: #0d9488; background-color: #f0fdfa; font-weight: 700; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .prose-custom { @apply prose max-w-none prose-p:my-2 prose-ul:my-2 prose-li:my-1 prose-headings:text-teal-700 prose-strong:text-slate-800; }
+        .prose-custom h3 { @apply text-xl font-bold mb-2 mt-4; }
+        .prose-custom h4 { @apply text-lg font-semibold text-teal-600 mb-2 mt-3; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; }
+        .symptom-tag { cursor: pointer; transition: all 0.2s ease; }
+        .symptom-tag.selected { background-color: #0d9488; color: white; transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .flowchart { @apply flex flex-col md:flex-row gap-4 items-center text-center; }
+        .flowchart-box { @apply bg-white border-2 border-teal-500 rounded-lg p-3 shadow-md w-full md:w-64; }
+        .flowchart-arrow { @apply text-2xl text-teal-500 font-bold; }
+    </style>
+</head>
+<body class="text-slate-800">
+    <div class="container mx-auto p-4 md:p-6">
+        <header class="text-center mb-6">
+            <h1 class="text-4xl md:text-5xl font-bold text-teal-700">Trợ lý Kinesiology Tổng hợp</h1>
+            <p class="mt-2 text-lg text-slate-600 max-w-3xl mx-auto">Ứng dụng được hợp nhất và phát triển bởi Huỳnh Đỗ (2025).</p>
+            <p class="mt-1 text-sm text-slate-400 max-w-3xl mx-auto">Công cụ toàn diện để học tập, tra cứu và hỗ trợ xây dựng phác đồ trị liệu AK & TFH.</p>
+        </header>
+
+        <main class="bg-white rounded-xl shadow-lg">
+            <nav class="flex flex-wrap border-b border-slate-200 rounded-t-xl overflow-hidden">
+                <button data-tab="overview" class="tab-button flex-1 p-4 text-sm md:text-base font-semibold text-slate-500 border-b-4 border-transparent">📊 Tổng Quan</button>
+                <button data-tab="library" class="tab-button flex-1 p-4 text-sm md:text-base font-semibold text-slate-500 border-b-4 border-transparent">📚 Thư Viện Cơ</button>
+                <button data-tab="protocol" class="tab-button flex-1 p-4 text-sm md:text-base font-semibold text-slate-500 border-b-4 border-transparent">🩺 Phác Đồ Trị Liệu</button>
+                <button data-tab="theory" class="tab-button flex-1 p-4 text-sm md:text-base font-semibold text-slate-500 border-b-4 border-transparent">📖 Lý Thuyết & Kỹ Thuật</button>
+            </nav>
+
+            <div class="p-4 md:p-8">
+                <section id="overview" class="tab-content prose-custom">
+                    <h2 class="text-2xl font-bold text-center mb-6">Chào mừng đến với Trợ lý Kinesiology Tổng hợp</h2>
+                    <p class="text-center text-slate-600">Đây là không gian để bạn tra cứu nhanh các sơ đồ, biểu đồ và quy trình cốt lõi trong thực hành Applied Kinesiology và Touch For Health. Sử dụng các công cụ trực quan này để củng cố kiến thức và hỗ trợ hiệu quả trong các buổi trị liệu.</p>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                        <div class="p-4 bg-slate-50 rounded-lg shadow-inner">
+                            <h3 class="text-center">Phân Bố Cơ Theo Kinh Mạch</h3>
+                            <div class="chart-container">
+                                <canvas id="meridian-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg shadow-inner">
+                            <h3 class="text-center">Các Triệu Chứng Phổ Biến Nhất</h3>
+                            <div class="chart-container">
+                                <canvas id="top-symptoms-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-center mt-12">Lưu Đồ Cân Bằng Năng Lượng (Tóm tắt)</h3>
+                    <div class="flowchart mt-4">
+                        <div class="flowchart-box"><strong>Bắt đầu</strong><p class="text-sm">Thu thập thông tin & Xác định mục tiêu</p></div>
+                        <div class="flowchart-arrow">→</div>
+                        <div class="flowchart-box"><strong>Chuẩn bị</strong><p class="text-sm">Kiểm tra các yếu tố nền tảng (nước, switching...)</p></div>
+                        <div class="flowchart-arrow">→</div>
+                        <div class="flowchart-box"><strong>Cân bằng</strong><p class="text-sm">Thử cơ, tìm cơ yếu và áp dụng kỹ thuật phù hợp</p></div>
+                        <div class="flowchart-arrow">→</div>
+                        <div class="flowchart-box"><strong>Kết thúc</strong><p class="text-sm">Kiểm tra lại mục tiêu & Đưa ra khuyến cáo</p></div>
+                    </div>
+                </section>
+
+                <section id="library" class="tab-content">
+                    <h2 class="text-2xl font-bold text-teal-700 mb-1">Thư Viện Các Nhóm Cơ</h2>
+                    <p class="text-slate-500 mb-6">Tra cứu chi tiết thông tin về giải phẫu, chức năng, cách test và cân bằng cho từng nhóm cơ.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-1">
+                            <input type="text" id="library-search" placeholder="Tìm kiếm cơ..." class="w-full p-3 border border-slate-300 rounded-lg mb-4 sticky top-4">
+                            <div id="muscle-list" class="h-[65vh] overflow-y-auto border border-slate-200 rounded-lg"></div>
+                        </div>
+                        <div id="library-detail" class="md:col-span-2 p-6 bg-slate-50 rounded-lg min-h-[65vh] prose-custom">
+                            <p class="text-slate-400 text-center mt-16">Vui lòng chọn một cơ từ danh sách để xem chi tiết.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="protocol" class="tab-content">
+                    <h2 class="text-2xl font-bold text-teal-700 mb-1">Xây Dựng Phác Đồ Trị Liệu</h2>
+                    <p class="text-slate-500 mb-6">Chọn các triệu chứng của bệnh nhân để xác định các cơ yếu tiềm năng và xem gợi ý phác đồ cân bằng.</p>
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-800 mb-3">Bước 1: Chọn Triệu chứng</h3>
+                            <input type="text" id="symptom-search" placeholder="Tìm và lọc triệu chứng..." class="w-full p-3 border border-slate-300 rounded-lg mb-3">
+                            <div id="symptom-tags" class="max-h-52 overflow-y-auto p-3 bg-slate-50 rounded-lg border flex flex-wrap gap-2"></div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-800 mb-3">Bước 2: Các Cơ Yếu Tiềm Năng & Phác Đồ Gợi Ý</h3>
+                            <div id="diagnostic-results" class="space-y-4">
+                                <p class="text-slate-400 text-center py-12">Chưa có triệu chứng nào được chọn.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="theory" class="tab-content prose-custom">
+                    <h2 class="text-2xl font-bold text-center mb-6">Lý Thuyết & Các Kỹ Thuật Cân Bằng</h2>
+                    <p class="text-center text-slate-600 mb-8">Nền tảng kiến thức và hướng dẫn chi tiết các kỹ thuật được sử dụng trong AK & TFH.</p>
+                    <div id="theory-accordion"></div>
+                </section>
+            </div>
+        </main>
+        <footer class="text-center mt-8 text-slate-400 text-sm">
+            <p>Công cụ này chỉ dành cho mục đích học tập và tham khảo.</p>
+        </footer>
+    </div>
+
+<script>
+// ===================================================================================
+// Dữ liệu hợp nhất từ cả hai phiên bản
+// ===================================================================================
+
+const masterDatabase = [
+    // 1. CƠ TỪ KINH MẠCH NHÂM / ĐỐC
+    {id: 1, name: "Cơ Trên Gai (Supraspinatus)", meridian: "Mạch Nhâm / Não", organ: "Não", overview: "<b>- Nguyên ủy:</b> Hố trên gai của xương vai.<br><b>- Bám tận:</b> Củ lớn của xương cánh tay.", func: "Hỗ trợ cơ Delta khởi đầu động tác dạng, giữ cánh tay cố định trong khớp vai.", symptoms: ["Lo lắng", "Căng thẳng", "Suy nhược thần kinh", "Vấn đề về vai", "Trẻ học chậm", "Đau vai", "Thoái hóa khớp", "Khó khăn trong học tập"], causes: "Stress, làm việc trí óc quá mức, bệnh văn phòng.", nutrition: "RNA, Protein, Axit amin, Choline, Phấn hoa, sáp ong, tảo biển, nước, mật ong nguyên chất, cá mòi.", test: "Nâng thẳng tay góc 30° về phía trước và hơi chếch sang bên. NTL ổn định vai và nhấn cẳng tay hướng về hông.", balance: "<b>- Khí (Cột sống):</b> C1, C2.<br><b>- Bạch huyết (NL):</b> Khoảng gian sườn 1 & 2, ngay dưới xương đòn và ở chỗ lõm giữa cơ delta trước và cơ ngực.<br><b>- Huyết (NV):</b> Các u lồi trên trán.", related: "Cơ trám, cơ ngực bé, cơ tròn lớn/bé, cơ lưng rộng, cơ duỗi cổ tay, cơ răng trước, cơ Delta, cơ dưới vai, cơ quạ cánh tay.", discussion: "Vì cơ delta hoạt động hiệp đồng, điều quan trọng là không để cánh tay vượt quá độ cao 20°, vì lúc đó cơ delta có lợi thế cơ học lớn hơn và đảm nhiệm phần lớn công việc. Gặp khó khăn trong học tập, đặc biệt là ở trẻ em, có thể liên quan đến tình trạng yếu cơ trên gai."},
+    {id: 2, name: "Cơ Tròn Lớn (Teres Major)", meridian: "Mạch Đốc / Cột sống", organ: "Cột sống", overview: "<b>- Nguyên ủy:</b> Bờ ngoài và góc dưới xương vai.<br><b>- Bám tận:</b> Mào củ bé xương cánh tay.", func: "Duỗi, khép và xoay trong vai.", symptoms: ["Vấn đề về vai", "Khó với tay ra sau", "Mụn cóc", "Cột sống bị cố định"], causes: "Lệch đốt sống, cố định cột sống ngực.", nutrition: "Iốt hữu cơ, khoáng chất hữu cơ, kẽm, cân bằng axit-kiềm, thực phẩm giàu protein (cá, trứng, sữa, thịt).", test: "Luồn tay ra sau lưng, kéo khuỷu tay về sau tối đa. NTL tạo lực kéo/nhấn khuỷu tay.", balance: "<b>- Khí (Cột sống):</b> T2.<br><b>- Bạch huyết (NL):</b> Trong hố nách hoặc dưới xương đòn giữa xương sườn 2 và 3.<br><b>- Huyết (NV):</b> Vùng thái dương, phía trên tai.", related: "Cơ ngực lớn, cơ Delta trước, cơ tròn bé, cơ dưới gai, cơ thang, cơ dưới vai.", discussion: "Nếu cơ trám hoặc cơ thang yếu, xương bả vai sẽ di chuyển ra ngoài trong quá trình kiểm tra, làm cho cơ tròn lớn có vẻ yếu. Để xác định cơ tròn lớn hay bé là nguyên nhân gây 'đông cứng vai', yêu cầu bệnh nhân nâng cánh tay khi xoay vào trong (cơ tròn lớn) hoặc xoay ngoài (cơ tròn bé). Động tác khó nhất sẽ xác định cơ chịu trách nhiệm."},
+    // 2. CƠ TỪ KINH VỊ
+    {id: 3, name: "Cơ Ngực Lớn Bó Đòn (Pectoralis Major Clavicular)", meridian: "Kinh Vị / Dạ dày", organ: "Dạ dày", overview: "<b>- Nguyên ủy:</b> 2/3 trong xương đòn.<br><b>- Bám tận:</b> Mào củ lớn xương cánh tay.", func: "Khép và xoay trong cánh tay, là cơ gấp chính của vai (60° đầu).", symptoms: ["Vấn đề tiêu hóa", "Vấn đề cảm xúc", "Lo lắng", "Stress", "Vấn đề về vai"], causes: "Stress, mất cân bằng axit dịch vị, vấn đề chuyển hóa đường.", nutrition: "Vitamin B tổng hợp (đặc biệt B12), Đồng, Kẽm, Betaine hydrochloride, Mầm lúa mì, ngũ cốc, gan, men bia.", test: "Nâng tay thẳng góc 90° với thân, ngón cái hướng xuống. NTL nhấn cẳng tay hướng xuống và ra ngoài.", balance: "<b>- Khí (Cột sống):</b> T5.<br><b>- Bạch huyết (NL):</b> Khoảng gian sườn 5-6 bên trái.<br><b>- Huyết (NV):</b> Trên trán, phía trên lông mày ('phản xạ cảm xúc' của Bennett).<br><b>- Huyệt:</b> Bổ (ST41-SI5, ST43-GB41), Tả (ST45-LI1, ST43-GB41).", related: "Cơ tròn lớn/bé, cơ lưng rộng, cơ trám, cơ thang giữa, cơ Delta sau, cơ trên gai, cơ mông lớn.", discussion: "Bó đòn của cơ ngực lớn có liên quan mật thiết đến rối loạn cảm xúc, nguyên nhân gây ra các vấn đề về dạ dày. Yếu hai bên có thể cho thấy dạ dày không sản xuất đủ axit clohydric, có thể do thiếu kẽm. Điểm yếu này có thể không biểu hiện cho đến khi yếu hai bên của bó dưới cơ thang được khắc phục."},
+    {id: 4, name: "Cơ Nâng Vai (Levator Scapulae)", meridian: "Kinh Vị / Dạ dày", organ: "Dạ dày", overview: "<b>- Nguyên ủy:</b> Mỏm ngang đốt sống cổ C1-C4.<br><b>- Bám tận:</b> Bờ trong xương bả vai.", func: "Nâng và xoay bả vai xuống dưới; nâng, ngửa và xoay đầu.", symptoms: ["Dị ứng", "Đau cổ", "Vai bị xoay", "Đầu cúi về trước", "Vấn đề tiêu hóa"], causes: "Lệch đốt sống cổ, rối loạn cân bằng axit/chuyển hóa đường.", nutrition: "Mầm lúa mì, ngũ cốc, gan, men bia.", test: "Khuỷu tay co ép sát hông, đầu ngửa về cùng bên. NTL kéo cánh tay trên ra ngoài.", balance: "<b>- Khí (Cột sống):</b> C5, T8.<br><b>- Bạch huyết (NL):</b> Góc trên trong của xương bả vai.<br><b>- Huyết (NV):</b> Ngay phía sau góc hàm.<br><b>- Huyệt:</b> Bổ (ST41-SI5, ST43-GB41), Tả (ST45-LI1, ST43-GB41).", related: "Cơ bậc thang, cơ lưng rộng, cơ thang dưới, cơ Delta sau, cơ tam đầu, cơ vuông thắt lưng, cơ mông lớn.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    {id: 5, name: "Cơ Gấp Cổ (Anterior Neck Flexors - SCM)", meridian: "Kinh Vị / Xoang", organ: "Xoang", overview: "<b>- Nguyên ủy:</b> Mặt trước cán ức, 1/3 trong xương đòn.<br><b>- Bám tận:</b> Mỏm chũm xương thái dương.", func: "Cúi đầu, nghiêng đầu cùng bên và xoay mặt đối bên.", symptoms: ["Dị ứng", "Hen suyễn", "Đau đầu", "Đau cổ", "Vấn đề về xoang", "Vẹo cổ"], causes: "Vẹo cổ, các vấn đề xoang mãn tính.", nutrition: "Vitamin B6, B3 (Niacin), Iốt hữu cơ, thuốc thảo dược trị xoang, Mầm lúa mì, men bia, yaourt, tảo bẹ, gan.", test: "Khách hàng cúi đầu về trước và xoay tối đa. NTL nhấn lên trán để duỗi cổ.", balance: "<b>- Khí (Cột sống):</b> C2.<br><b>- Bạch huyết (NL):</b> Góc hàm và dưới cằm; Khoang liên sườn 1.<br><b>- Huyết (NV):</b> Ngay phía sau góc hàm.<br><b>- Huyệt:</b> Bổ (ST41-SI5, ST43-GB41), Tả (ST45-LI1, ST43-GB41).", related: "Nhóm cơ duỗi cổ, cơ thang trên, cơ ngực lớn bó đòn, nhóm cơ bụng, nhóm cơ gấp hông.", discussion: "Cơ gấp cổ yếu hơn nhiều so với cơ duỗi cổ, thường tạo ra mô hình cơ chính (duỗi cổ co thắt) và cơ phản ứng (gấp cổ suy yếu). Yếu hai bên thường liên quan đến ý chí và khả năng vượt qua trở ngại."},
+    {id: 6, name: "Cơ Duỗi Cổ (Posterior Neck Extensors)", meridian: "Kinh Vị / Xoang", organ: "Xoang", overview: "<b>- Nguyên ủy:</b> Gai sau đốt sống C7-T6.<br><b>- Bám tận:</b> Phía sau hộp sọ.", func: "Ngửa đầu ra sau.", symptoms: ["Dị ứng", "Hen suyễn", "Đau đầu", "Đau cổ", "Vấn đề về xoang", "Vẹo cổ"], causes: "Vẹo cổ, các vấn đề xoang.", nutrition: "Gan, men bia, mầm lúa mạch, yaourt, tảo bẹ.", test: "Khách hàng ngửa đầu về sau. NTL ấn đầu hướng về trước.", balance: "<b>- Khí (Cột sống):</b> C2.<br><b>- Bạch huyết (NL):</b> Góc hàm và dưới cằm.<br><b>- Huyết (NV):</b> Ngay phía sau góc hàm.<br><b>- Huyệt:</b> Bổ (ST41-SI5, ST43-GB41), Tả (ST45-LI1, ST43-GB41).", related: "Nhóm cơ gập cổ, cơ dựng sống (ngực, lưng), cơ mông lớn.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    {id: 7, name: "Cơ Cánh Tay Quay (Brachioradialis)", meridian: "Kinh Vị / Dạ dày", organ: "Dạ dày", overview: "<b>- Nguyên ủy:</b> 2/3 dưới xương cánh tay.<br><b>- Bám tận:</b> Mỏm vẹt xương trụ.", func: "Gấp duỗi cánh tay và xoay cổ tay (úp/ngửa).", symptoms: ["Mất ngủ", "Vấn đề về cổ tay", "Vấn đề tiêu hóa"], causes: "Lo lắng, căng thẳng thần kinh.", nutrition: "Vitamin B6.", test: "Co cánh tay góc > 90°, ngón cái hướng về vai. NTL kéo cổ tay để duỗi thẳng tay.", balance: "<b>- Khí (Cột sống):</b> T12.<br><b>- Bạch huyết (NL):</b> Khoảng gian sườn 5-6 bên trái.<br><b>- Huyết (NV):</b> Trên trán, phía trên lông mày.<br><b>- Huyệt:</b> Bổ (ST41-SI5, ST43-GB41), Tả (ST45-LI1, ST43-GB41).", related: "Cơ tam đầu, cơ nhị đầu, cơ Delta trước, cơ thang trên, cơ bậc thang.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    {id: 49, name: "Cơ Ngực Bé (Pectoralis Minor)", meridian: "Kinh Vị / Dạ dày", organ: "Dạ dày", overview: "<b>- Nguyên ủy:</b> Từ xương sườn 3, 4, 5 gần nơi tiếp giáp với sụn.<br><b>- Bám tận:</b> Vào mỏm quạ của xương bả vai.", func: "Kéo mỏm quạ ra trước, vào trong và xuống dưới. Giúp thực hiện hành động hít vào gắng sức.", symptoms: ["Vấn đề về vai", "Hội chứng đông cứng vai", "Tư thế hõm ngực", "Tắc nghẽn bạch huyết", "Vấn đề tiêu hóa"], causes: "Co rút, co thắt cơ.", nutrition: "RNA, Niacin, Vitamin B tổng hợp, Kẽm, Nước.", test: "Đưa vai xuống và về phía trước. NTL tạo lực cản.", balance: "<b>- Khí (Cột sống):</b> T8-11 (dự đoán).<br><b>- Bạch huyết (NL):</b> Ngay phía trên mỏm mũi kiếm của xương ức.<br><b>- Huyết (NV):</b> Không xác nhận trong AK, có thể dùng điểm của cơ thang trên.", related: "Cơ răng trước, cơ trên gai, cơ delta, bó trên cơ thang.", discussion: "Gerz coi đây là cơ quan trọng nhất và ít được kiểm tra nhất trong AK. Khi cơ bị căng, nó có thể chèn ép bó dây thần kinh và mạch máu, gây đau và 'đông cứng' khớp vai, cũng như chèn ép ống bạch huyết chính."},
+    // 3. CƠ TỪ KINH TỲ
+    {id: 8, name: "Cơ Lưng Rộng (Latissimus Dorsi)", meridian: "Kinh Tỳ / Tuyến tụy", organ: "Tuyến tụy", overview: "<b>- Nguyên ủy:</b> Mỏm gai D7-L5, mào cùng, 1/3 sau mào chậu, 4 xương sườn dưới.<br><b>- Bám tận:</b> Rãnh gian củ xương cánh tay.", func: "Duỗi, khép, xoay trong cánh tay. Kéo bả vai xuống và vào trong.", symptoms: ["Vấn đề chuyển hóa đường", "Dị ứng", "Hạ đường huyết", "Đau lưng"], causes: "Rối loạn chuyển hóa đường.", nutrition: "Vitamin A, F, Betaine, Kẽm, Selen, Crom. Lòng bò, rau xanh.", test: "Tay thẳng cạnh thân, NTL kéo tay ra ngoài và về trước.", balance: "<b>- Khí (Cột sống):</b> T7.<br><b>- Bạch huyết (NL):</b> Dưới vú trái (giữa xương sườn 7-8).<br><b>- Huyết (NV):</b> Đỉnh đầu (hơi chếch về sau).<br><b>- Huyệt:</b> Bổ(SP2-H8, SP1-LV1), Tả(SP5-LU8, SP1-LV1).", related: "Cơ thang trên, cơ đùi sau đối bên, cơ trên gai, cơ delta, cơ nâng vai.", discussion: "Là chỉ điểm nhạy cho mất cân bằng đường huyết. Yếu bên trái thường liên quan đến sản xuất insulin, yếu bên phải liên quan đến enzyme tuyến tụy. Thường yếu thứ phát do cơ thang trên cùng bên bị tăng trương lực."},
+    {id: 9, name: "Cơ Thang (Giữa & Dưới) (Middle/Lower Trapezius)", meridian: "Kinh Tỳ / Lá lách", organ: "Lá lách", overview: "<b>- Nguyên ủy:</b> Mỏm gai T1-T12.<br><b>- Bám tận:</b> Gai vai, mỏm cùng vai.", func: "Khép, hạ, xoay xương vai.", symptoms: ["Sốt", "Nhiễm trùng", "Viêm họng", "Thiếu máu", "Vấn đề chuyển hóa đường"], causes: "Nhiễm trùng, lệch đốt sống.", nutrition: "Vitamin C, Canxi, Cam quýt, ớt xanh.", test: "Tay dang ngang (giữa) / Tay chéo xuống (dưới), NTL tạo lực cản.", balance: "<b>- Khí (Cột sống):</b> T5, T6.<br><b>- Bạch huyết (NL):</b> Dưới vú trái (giữa xương sườn 7-8).<br><b>- Huyết (NV):</b> Đỉnh đầu (hơi chếch về sau).<br><b>- Huyệt:</b> Bổ(SP2-H8, SP1-LV1), Tả(SP5-LU8, SP1-LV1).", related: "Cơ ngực lớn, cơ ngực bé, cơ răng trước, cơ trám.", discussion: "Yếu hai bên bó dưới thường cho thấy dính khớp T-L. Yếu hai bên bó giữa thường do thiếu vitamin C."},
+    {id: 11, name: "Cơ Đối Ngón Cái - Út (Opponens Pollicis/Digiti Minimi)", meridian: "Kinh Tỳ / Lá lách", organ: "Lá lách", overview: "<b>- Nguyên ủy:</b> Hãm gân gấp, xương thang.<br><b>- Bám tận:</b> Xương đốt bàn 1 & 5.", func: "Đối ngón cái và ngón út.", symptoms: ["Đau khuỷu tay", "Vấn đề chuyển hóa đường", "Tennis elbow"], causes: "Cố định xương cùng.", nutrition: "Thực phẩm giàu canxi.", test: "Chạm ngón cái và út, NTL kéo tách ra.", balance: "<b>- Khí (Cột sống):</b> C4.<br><b>- Bạch huyết (NL):</b> Dưới vú trái.<br><b>- Huyết (NV):</b> Đỉnh đầu.<br><b>- Huyệt:</b> Bổ(SP2-H8, SP1-LV1), Tả(SP5-LU8, SP1-LV1).", related: "Cơ lưng rộng.", discussion: "Thường liên quan đến vận động viên quần vợt, có thể là cơ chính gây yếu cơ lưng rộng (cơ phản ứng)."},
+    {id: 12, name: "Cơ Tam Đầu (Triceps)", meridian: "Kinh Tỳ / Tuyến tụy", organ: "Tuyến tụy", overview: "<b>- Nguyên ủy:</b> Củ dưới ổ chảo, mặt sau xương cánh tay.<br><b>- Bám tận:</b> Mỏm khuỷu xương trụ.", func: "Duỗi cẳng tay.", symptoms: ["Rối loạn chuyển hóa đường", "Mệt mỏi"], causes: "Rối loạn chuyển hóa đường.", nutrition: "Ớt xanh, rau lá xanh, gan.", test: "Gấp khuỷu tay, NTL nhấn cổ tay để gập thêm.", balance: "<b>- Khí (Cột sống):</b> T1.<br><b>- Bạch huyết (NL):</b> Dưới vú trái.<br><b>- Huyết (NV):</b> Đỉnh đầu.<br><b>- Huyệt:</b> Bổ(SP2-H8, SP1-LV1), Tả(SP5-LU8, SP1-LV1).", related: "Cơ cánh tay quay, cơ nhị đầu.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    // 4. CƠ TỪ KINH TÂM
+    {id: 13, name: "Cơ Dưới Vai (Subscapularis)", meridian: "Kinh Tâm / Tim", organ: "Tim", overview: "<b>- Nguyên ủy:</b> Gần như toàn bộ mặt trong của xương bả vai.<br><b>- Bám tận:</b> Củ bé xương cánh tay.", func: "Xoay trong cánh tay, cố định đầu xương cánh tay.", symptoms: ["Đánh trống ngực", "Chóng mặt", "Đau ngực", "Chảy máu nướu răng", "Vấn đề về vai"], causes: "Căng thẳng cảm xúc, rối loạn nhịp tim.", nutrition: "Vitamin E, B2, B3, C, Carnitine, Men bia, mầm lúa mạch, trứng, rau xanh.", test: "Dang tay, gập khuỷu 90°, NTL kéo cẳng tay lên trên.", balance: "<b>- Khí (Cột sống):</b> T2, T3.<br><b>- Bạch huyết (NL):</b> Hố nách; Giữa xương sườn 2-3.<br><b>- Huyết (NV):</b> U trán (Bregma).<br><b>- Huyệt:</b> Bổ(H9-LV1, H3-K10).", related: "Cơ tròn bé, cơ dưới gai, cơ delta, cơ trên gai.", discussion: "Khi tập luyện bị rối loạn nhịp tim, cơ dưới vai thường yếu. Kích thích thần kinh bạch huyết sẽ củng cố cơ và điều chỉnh phản ứng của tim. Các cơn co thắt 'tim đập' và chóng mặt có thể được cải thiện bằng cách tăng cường cơ này."},
+    {id: 61, name: "Cơ Dưới Đòn (Subclavius)", meridian: "Kinh Tâm / Tim", organ: "Tim", overview: "<b>- Nguyên ủy:</b> Ở đầu xương sườn và sụn sườn thứ nhất.<br><b>- Bám tận:</b> Phía dưới của giữa xương đòn.", func: "Kéo xương đòn ra trước và vào trong, kéo vào trong về phía khớp ức đòn.", symptoms: ["Vấn đề về vai", "Hội chứng đông cứng vai", "Vấn đề về tim"], causes: "Căng thẳng cấu trúc.", nutrition: "Vitamin E, B tổng hợp, C, magie.", test: "Đưa vai ra trước, vào trong và xuống dưới. NTL tạo lực cản.", balance: "<b>- Khí (Cột sống):</b> T1.<br><b>- Bạch huyết (NL):</b> Tại khớp nối xương đòn, xương ức và xương sườn thứ nhất.<br><b>- Huyết (NV):</b> Chiều rộng bằng hai ngón tay ở phía trước tai.<br><b>- Huyệt:</b> Bổ(H9-LV1, H3-K10).", related: "Cơ thang trên.", discussion: "Thường liên quan đến hội chứng 'đông cứng vai'. Trong những trường hợp này, bệnh nhân phải nghiêng người sang một bên để nâng cánh tay. Tăng cường sức mạnh cơ dưới đòn có thể ngay lập tức cải thiện khả năng nâng cao vai."},
+    // 5. CƠ TỪ KINH TIỂU TRƯỜNG
+    {id: 14, name: "Cơ Tứ Đầu Đùi (Quadriceps)", meridian: "Kinh Tiểu Trường / Ruột non", organ: "Ruột non", overview: "<b>- Nguyên ủy:</b> Gai chậu trước dưới, viền ổ cối.<br><b>- Bám tận:</b> Lồi củ xương chày qua xương bánh chè.", func: "Duỗi cẳng chân và gấp đùi.", symptoms: ["Đau bụng", "Vấn đề tiêu hóa", "Đau gối", "Khó leo cầu thang"], causes: "Kém hấp thu.", nutrition: "Vitamin D, B tổng hợp, Canxi, Coenzym Q10, Acidophilus, Bơ sữa, men bia, gan.", test: "Nâng đùi vuông góc, NTL nhấn gối/cổ chân xuống.", balance: "<b>- Khí (Cột sống):</b> T10, T11.<br><b>- Bạch huyết (NL):</b> Dọc đùi ngoài, dưới bờ sườn.<br><b>- Huyết (NV):</b> U trán, u đỉnh sau.<br><b>- Huyệt:</b> Bổ(SI3-GB41, SI2-BL66), Tả(SI8-ST36, SI2-BL66).", related: "Cơ bụng chân, cơ đùi sau, cơ thẳng bụng, cơ may, cơ mông lớn, cơ khép.", discussion: "Các vấn đề về chức năng của ruột non thường có thể được cải thiện bằng cách kích thích kéo dài các phản xạ thần kinh bạch huyết. Trong chấn thương thể thao, cơ tứ đầu thường liên quan đến mối quan hệ phản ứng cơ."},
+    {id: 15, name: "Cơ Bụng (Abdominals)", meridian: "Kinh Tiểu Trường / Ruột non", organ: "Ruột non", overview: "<b>- Nguyên ủy:</b> Củ mu và mào mu.<br><b>- Bám tận:</b> Sụn sườn V-VII, mỏm mũi kiếm.", func: "Gấp và căng cột sống, giữ các cơ quan.", symptoms: ["Khó thở", "Vấn đề tiêu hóa", "Đau lưng", "Thòng bụng", "Tăng đường cong thắt lưng"], causes: "Kém hấp thu, yếu cấu trúc.", nutrition: "Vitamin E, Coenzym Q10, Mầm lúa mạch, đậu xanh.", test: "Nằm co gối, tay bắt chéo vai, NTL ấn vào tay.", balance: "<b>- Khí (Cột sống):</b> T9-T11.<br><b>- Bạch huyết (NL):</b> Dọc đùi trong và ngoài.<br><b>- Huyết (NV):</b> U đỉnh.<br><b>- Huyệt:</b> Bổ(SI3-GB41, SI2-BL66), Tả(SI8-ST36, SI2-BL66).", related: "Cơ tứ đầu, cơ mông nhỡ đối bên, cơ dựng sống, cơ thẳng đùi, cơ may, cơ vuông thắt lưng.", discussion: "Khi cơ thẳng bụng yếu, xương chậu nghiêng về phía trước, tạo ra tình trạng ưỡn ngực quá mức, gây áp lực lên đĩa đệm thắt lưng. Yếu cơ bụng thường đi kèm với kẹt đường khớp dọc sọ."},
+    // 6. CƠ TỪ KINH BÀNG QUANG
+    {id: 16, name: "Cơ Mác (Peroneus)", meridian: "Kinh Bàng Quang / Bàng quang", organ: "Bàng quang", overview: "<b>- Nguyên ủy:</b> 1/3 dưới mặt trong xương mác (mác ba); 2/3 trên xương mác (mác dài).<br><b>- Bám tận:</b> Nền xương đốt bàn chân 5; xương chêm và đốt bàn 1.", func: "Gấp mu/lòng bàn chân và nghiêng bàn chân ra ngoài.", symptoms: ["Vấn đề bàn chân", "Vấn đề bàng quang", "Vấn đề đi tiểu", "Bong gân mắt cá chân"], causes: "Gót yếu, mất cân bằng cấu trúc.", nutrition: "Canxi, Kali, Vitamin B tổng hợp, tránh thực phẩm chứa axit oxalic (cà phê, plận).", test: "Xoay ngoài bàn chân, NTL ấn xuống và vào trong.", balance: "<b>- Khí (Cột sống):</b> T12, L1.<br><b>- Bạch huyết (NL):</b> Dọc đường nối nách và rìa dưới xương mu.<br><b>- Huyết (NV):</b> U đỉnh, u trán.<br><b>- Huyệt:</b> Bổ(BL67-LI1, BL40-ST36), Tả(BL65-GB41, BL40-ST36).", related: "Cơ căng mạc đùi, cơ chày trước và sau.", discussion: "Bong gân mắt cá chân tái phát thường do cơ mác yếu. Cơ mác dài và ngắn thường phản ứng với cơ mác ba sau chấn thương, việc khắc phục phản ứng này rất quan trọng."},
+    {id: 17, name: "Cơ Dựng Sống (Sacrospinalis)", meridian: "Kinh Bàng Quang / Bàng quang", organ: "Bàng quang", overview: "<b>- Nguyên ủy:</b> Dọc cột sống từ xương cùng đến các xương sườn, mỏm gai.<br><b>- Bám tận:</b> Chân hộp sọ.", func: "Giữ lưng thẳng, duỗi, xoay và gập bên cột sống.", symptoms: ["Viêm khớp", "Vẹo cột sống", "Đau lưng", "Thấp khớp"], causes: "Căng thẳng tâm lý, sai tư thế.", nutrition: "Vitamin A, C, P, E và Canxi.", test: "Đứng xoay thân hoặc nghiêng người sang bên, NTL tạo lực cản.", balance: "<b>- Khí (Cột sống):</b> L2-L5.<br><b>- Bạch huyết (NL):</b> Dọc xương cùng và mặt trước xương mu.<br><b>- Huyết (NV):</b> U đỉnh và u trán.<br><b>- Huyệt:</b> Bổ(BL67-LI1, BL40-ST36), Tả(BL65-GB41, BL40-ST36).", related: "Cơ mông lớn, cơ đùi sau, cơ bụng.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    {id: 18, name: "Cơ Chày Trước (Anterior Tibial)", meridian: "Kinh Bàng Quang / Bàng quang", organ: "Bàng quang", overview: "<b>- Nguyên ủy:</b> Lồi cầu ngoài, nửa trên xương chày.<br><b>- Bám tận:</b> Xương chêm trong, nền đốt bàn 1.", func: "Gấp mu và xoay trong bàn chân.", symptoms: ["Bàn chân bẹt", "Vấn đề đi tiểu", "Vấn đề của gót"], causes: "Mất cân bằng cấu trúc.", nutrition: "Đậu hà lan, mầm lúa mạch.", test: "Gập cổ chân hướng lên, NTL ấn xuống.", balance: "<b>- Khí (Cột sống):</b> L4.<br><b>- Bạch huyết (NL):</b> Dọc đường nối nách.<br><b>- Huyết (NV):</b> U đỉnh.<br><b>- Huyệt:</b> Bổ(BL67-LI1, BL40-ST36), Tả(BL65-GB41, BL40-ST36).", related: "Cơ mác, cơ may.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    {id: 19, name: "Cơ Chày Sau (Posterior Tibial)", meridian: "Kinh Bàng Quang / Bàng quang", organ: "Bàng quang", overview: "<b>- Nguyên ủy:</b> Màng gian cốt, mặt sau xương chày.<br><b>- Bám tận:</b> Xương thuyền, 3 xương chêm, nền đốt bàn 2-4.", func: "Gấp lòng và xoay trong bàn chân.", symptoms: ["Bàn chân phẳng", "Vấn đề đi tiểu", "Vấn đề của gót"], causes: "Mất cân bằng cấu trúc.", nutrition: "Canxi, Kali, Vitamin B.", test: "Gập lòng và vặn trong bàn chân, NTL ấn lên và ra ngoài.", balance: "<b>- Khí (Cột sống):</b> L5.<br><b>- Bạch huyết (NL):</b> Dọc đường nối nách, rìa dưới xương mu.<br><b>- Huyết (NV):</b> U đỉnh.<br><b>- Huyệt:</b> Bổ(BL67-LI1, BL40-ST36), Tả(BL65-GB41, BL40-ST36).", related: "Cơ mác.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    // 7. CƠ TỪ KINH THẬN
+    {id: 20, name: "Cơ Thắt Lưng (Psoas)", meridian: "Kinh Thận / Thận", organ: "Thận", overview: "<b>- Nguyên ủy:</b> Thân và mỏm ngang D12-L5.<br><b>- Bám tận:</b> Mấu chuyển nhỏ xương đùi.", func: "Gấp đùi, giữ đường cong thắt lưng.", symptoms: ["Đau lưng", "Bệnh ngoài da", "Vấn đề bàn chân", "Đĩa đệm", "Chàm, nhọt"], causes: "Gót yếu, căng thẳng cấu trúc.", nutrition: "Vitamin A, E, Nước, Mầm lúa mạch, rau mùi tây.", test: "Nâng thẳng chân ra trước và ngoài 45°, NTL kéo chân ra ngoài và sau.", balance: "<b>- Khí (Cột sống):</b> T12-L2.<br><b>- Bạch huyết (NL):</b> Ngay trên xương mu, cách rốn 2.5cm.<br><b>- Huyết (NV):</b> U trán, ụ chẩm.<br><b>- Huyệt:</b> Bổ(K7-LU8, K3-SP3), Tả(K1-LV1, K3-SP3).", related: "Các cơ khép, cơ hoành, cơ mông lớn, cơ gấp cổ trước đối bên, cơ đùi sau, cơ vuông thắt lưng, cơ dựng sống.", discussion: "Là cơ giữ tư thế quan trọng. Căng hai bên làm tăng đường cong thắt lưng, yếu hai bên làm mất đường cong. Yếu một bên gây xoay bàn chân. Hỗ trợ khớp cùng-chậu, cần kiểm tra khi có vấn đề đau lưng hoặc đĩa đệm."},
+    {id: 21, name: "Cơ Thang Trên (Upper Trapezius)", meridian: "Kinh Thận / Tai & Mắt", organ: "Tai & Mắt", overview: "<b>- Nguyên ủy:</b> Xương chẩm, dây chằng cổ.<br><b>- Bám tận:</b> 1/3 ngoài xương đòn, mỏm cùng vai.", func: "Nâng vai, nghiêng đầu, xoay xương bả vai.", symptoms: ["Vấn đề thị giác", "Vấn đề thính giác", "Đau cổ", "Đau đầu", "Lác mắt", "Mỏi mắt"], causes: "Căng thẳng, tư thế đầu đưa ra trước.", nutrition: "Vitamin A, B, F, G, Canxi, Nước, Trứng, ngũ cốc, cam quýt.", test: "Nâng vai lên tai, nghiêng đầu, NTL kéo tách ra.", balance: "<b>- Khí (Cột sống):</b> C7, T1.<br><b>- Bạch huyết (NL):</b> Dưới xương đòn, giữa xương sườn 7-8 trái.<br><b>- Huyết (NV):</b> U đỉnh, trên xương gò má.<br><b>- Huyệt:</b> Bổ(K7-LU8, K3-SP3), Tả(K1-LV1, K3-SP3).", related: "Cơ ngực lớn, cơ ngực bé, cơ lưng rộng, cơ nhị đầu.", discussion: "Thường liên quan đến các vấn đề về mắt (lác) và tai (mất thính lực tần số thấp). Căng thẳng quá mức của cơ này là cực kỳ phổ biến và thường là cơ chính gây yếu cơ lưng rộng (cơ phản ứng)."},
+    {id: 22, name: "Cơ Chậu (Iliacus)", meridian: "Kinh Thận / Van hồi manh tràng", organ: "Van hồi manh tràng", overview: "<b>- Nguyên ủy:</b> Hố chậu, mào chậu, cánh xương cùng.<br><b>- Bám tận:</b> Mấu chuyển nhỏ xương đùi.", func: "Gấp người vào đùi.", symptoms: ["Buồn nôn", "Đau lưng đột ngột", "Quầng thâm mắt", "Đau đầu", "Khát đột ngột"], causes: "Vấn đề tiêu hóa.", nutrition: "Yaourt, nấm Kefer, Vitamin A, E.", test: "Co gối 90°, xoay cẳng chân ra ngoài, NTL ấn vào trong.", balance: "<b>- Khí (Cột sống):</b> L3, L4.<br><b>- Bạch huyết (NL):</b> Dọc theo nếp bẹn.<br><b>- Huyết (NV):</b> U trán.<br><b>- Huyệt:</b> Bổ(K7-LU8, K3-SP3), Tả(K1-LV1, K3-SP3).", related: "Cơ thắt lưng (Psoas).", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    // 8. CƠ TỪ KINH TÂM BÀO
+    {id: 23, name: "Cơ Mông Nhỡ (Gluteus Medius)", meridian: "Kinh Tâm Bào / Sinh dục", organ: "Sinh dục", overview: "<b>- Nguyên ủy:</b> Mặt ngoài cánh chậu.<br><b>- Bám tận:</b> Mặt ngoài mấu chuyển lớn xương đùi.", func: "Dạng đùi và xoay chân.", symptoms: ["Chân vòng kiềng", "Rối loạn nội tiết", "Thống kinh", "Vấn đề tuyến tiền liệt", "Liệt dương", "Đau ngực"], causes: "Rối loạn nội tiết tố.", nutrition: "Vitamin E, Niacin, Kẽm, Mầm lúa mì, hàu đá.", test: "Dang chân thẳng sang bên, NTL nhấn ép vào trong.", balance: "<b>- Khí (Cột sống):</b> L5.<br><b>- Bạch huyết (NL):</b> Dọc xương cùng, mép trên khớp mu.<br><b>- Huyết (NV):</b> U đỉnh.<br><b>- Huyệt:</b> Bổ(CX9-LV1, CX3-K10), Tả(CX7-SP3, CX3-K10).", related: "Cơ thẳng bụng đối bên, nhóm cơ khép.", discussion: "Khi cơ này yếu một bên, xương chậu, vai và đầu sẽ cao hơn ở cùng bên, tạo dáng đi khập khiễng điển hình. Mất cân bằng thường liên quan đến các vấn đề nội tiết."},
+    {id: 24, name: "Cơ Khép (Adductors)", meridian: "Kinh Tâm Bào / Sinh dục", organ: "Sinh dục", overview: "<b>- Nguyên ủy:</b> Ngành mu, ụ ngồi.<br><b>- Bám tận:</b> Đường ráp xương đùi.", func: "Khép, gấp, xoay trong đùi.", symptoms: ["Chân vòng kiềng", "Vấn đề mãn kinh", "Đau khuỷu tay", "Đau vai", "Tennis elbow", "Rối loạn nội tiết"], causes: "Rối loạn nội tiết tố, áp lực liên tục (như cưỡi ngựa).", nutrition: "Vitamin E, Niacin, Kẽm, Mầm lúa mì, hàu đá.", test: "Khép 2 chân, NTL kéo tách 1 chân ra ngoài.", balance: "<b>- Khí (Cột sống):</b> Xương mu.<br><b>- Bạch huyết (NL):</b> Dọc xương mu, dưới núm vú.<br><b>- Huyết (NV):</b> U đỉnh, giữa đường khớp Lambda.<br><b>- Huyệt:</b> Bổ(CX9-LV1, CX3-K10), Tả(CX7-SP3, CX3-K10).", related: "Cơ thắt lưng chậu, cơ hình lê, cơ căng mạc đùi, cơ mông nhỡ và lớn.", discussion: "Yếu một bên làm xương chậu bên đó hạ thấp. Sự yếu của nhóm cơ này thường là nguyên nhân gây đau vai và 'hội chứng tennis elbow' do liên quan đến điểm phản xạ thần kinh bạch huyết."},
+    {id: 25, name: "Cơ Hình Lê (Piriformis)", meridian: "Kinh Tâm Bào / Sinh dục", organ: "Sinh dục", overview: "<b>- Nguyên ủy:</b> Mặt trước xương cùng S1-S4.<br><b>- Bám tận:</b> Bờ trên mấu chuyển lớn xương đùi.", func: "Dạng và xoay ngoài/trong đùi tùy góc gập hông.", symptoms: ["Đau thần kinh tọa", "Tê chân", "Vấn đề tiểu tiện", "Đau lưng", "Vấn đề sinh dục"], causes: "Chèn ép cơ học, vấn đề cấu trúc xương chậu.", nutrition: "Vitamin E, A, Niacin, Kẽm, Mầm lúa mì, hàu đá.", test: "Co gối 90°, xoay cẳng chân vào trong, NTL kéo ra ngoài.", balance: "<b>- Khí (Cột sống):</b> S2-S4.<br><b>- Bạch huyết (NL):</b> Dọc xương cùng, mặt trên xương mu.<br><b>- Huyết (NV):</b> U đỉnh, phía trên và sau tai.<br><b>- Huyệt:</b> Bổ(CX9-LV1, CX3-K10), Tả(CX7-SP3, CX3-K10).", related: "Cơ gối đầu đối bên, cơ mông nhỡ, cơ căng mạc đùi, cơ khép, cơ đùi sau trong.", discussion: "Thường dùng làm cơ chỉ điểm. Yếu hai bên có thể chỉ vấn đề nghiêm trọng về xương chậu. Yếu một bên, bên còn lại thường tăng trương lực, có thể kéo dính xương chậu và gây đau thần kinh tọa."},
+    {id: 26, name: "Cơ Mông Lớn (Gluteus Maximus)", meridian: "Kinh Tâm Bào / Sinh dục", organ: "Sinh dục", overview: "<b>- Nguyên ủy:</b> Mặt ngoài cánh chậu, mặt sau xương cùng.<br><b>- Bám tận:</b> Dải chậu-chày, lồi củ cơ mông.", func: "Duỗi đùi, ổn định lưng dưới.", symptoms: ["Khó đi bộ", "Vấn đề tiền liệt tuyến", "Khó leo cầu thang", "Thiếu ham muốn tình dục"], causes: "Lệch đốt sống cổ trên.", nutrition: "Vitamin E, Niacin, Kẽm, Mầm lúa mì, hàu đá.", test: "Nằm sấp, co gối 90°, duỗi đùi về sau, NTL nhấn đùi về trước.", balance: "<b>- Khí (Cột sống):</b> L5, Xương cùng.<br><b>- Bạch huyết (NL):</b> Dọc xương cùng, dải rộng dọc đùi.<br><b>- Huyết (NV):</b> U đỉnh, giữa đường khớp Lambda.<br><b>- Huyệt:</b> Bổ(CX9-LV1, CX3-K10), Tả(CX7-SP3, CX3-K10).", related: "Cơ dựng sống, cơ ngực lớn, cơ thắt lưng chậu, cơ thẳng đùi, cơ may, cơ hình lê, cơ khép, cơ căng mạc đùi.", discussion: "Yếu một bên làm xương chậu hạ thấp và xoay về trước. Yếu hai bên làm lưng lắc lư. Thường yếu một bên và tăng trương lực ở bên đối diện."},
+    // 9. CƠ TỪ KINH TAM TIÊU
+    {id: 27, name: "Cơ Tròn Bé (Teres Minor)", meridian: "Kinh Tam Tiêu / Tuyến giáp", organ: "Tuyến giáp", overview: "<b>- Nguyên ủy:</b> Phần dưới bờ ngoài xương vai.<br><b>- Bám tận:</b> Củ lớn xương cánh tay.", func: "Xoay ngoài, duỗi, khép cánh tay. Giữ đầu xương cánh tay.", symptoms: ["Vấn đề tuyến giáp", "Vấn đề tiêu hóa", "Thay đổi cân nặng", "Khóc vô cớ", "Hội chứng đông cứng vai"], causes: "Bệnh tuyến giáp, nhiễm trùng.", nutrition: "Iốt hữu cơ (tảo bẹ), Tyrosine.", test: "Gập khuỷu 90°, xoay cẳng tay ra ngoài, NTL ấn vào trong.", balance: "<b>- Khí (Cột sống):</b> T2, T3.<br><b>- Bạch huyết (NL):</b> Hố nách; Giữa xương sườn 2-3.<br><b>- Huyết (NV):</b> U thái dương, phía trước đỉnh tai.<br><b>- Huyệt:</b> Bổ(TW3-GB41, TW2-BL66), Tả(TW10-ST36, TW2-BL66).", related: "Cơ dưới vai, cơ lưng rộng, cơ delta, cơ trên gai.", discussion: "Giữ đầu xương cánh tay trong khớp vai khi giơ lên. Nếu nó yếu, vai có thể bị 'đông cứng'. Các triệu chứng liên quan đến tuyến giáp thường đi kèm với yếu cơ này."},
+    {id: 28, name: "Cơ May (Sartorius)", meridian: "Kinh Tam Tiêu / Tuyến thượng thận", organ: "Tuyến thượng thận", overview: "<b>- Nguyên ủy:</b> Gai chậu trước trên.<br><b>- Bám tận:</b> Phần trên mặt trong xương chày.", func: "Gấp, dạng, xoay ngoài đùi. Ổn định mặt trong đầu gối.", symptoms: ["Dị ứng", "Hen suyễn", "Mệt mỏi", "Đau gối", "Huyết áp thấp", "Hạ đường huyết", "Chân chữ X"], causes: "Vấn đề tuyến thượng thận.", nutrition: "Vitamin C, Axit pantothenic, Tyrosine, B6, B12, Axit folic, Cam quýt, rau cải lá xanh.", test: "Co gối, vắt chân qua bên kia, NTL kéo thẳng chân ra.", balance: "<b>- Khí (Cột sống):</b> L2, L3.<br><b>- Bạch huyết (NL):</b> Bụng dưới (5cm trên rốn).<br><b>- Huyết (NV):</b> U thái dương, thóp sau (Lambda).<br><b>- Huyệt:</b> Bổ(TW3-GB41, TW2-BL66), Tả(TW10-ST36, TW2-BL66).", related: "Cơ tứ đầu và cơ chày trước.", discussion: "Là cơ dài nhất cơ thể, ổn định vùng chậu. Yếu cơ này làm xương chậu trật ra sau. Mọi vấn đề của tuyến thượng thận đều có thể ảnh hưởng đến cơ may và ngược lại."},
+    {id: 29, name: "Cơ Thon (Gracilis)", meridian: "Kinh Tam Tiêu / Tuyến thượng thận", organ: "Tuyến thượng thận", overview: "<b>- Nguyên ủy:</b> Thân và ngành dưới xương mu.<br><b>- Bám tận:</b> Phần trên mặt trong xương chày.", func: "Khép đùi và gấp cẳng chân.", symptoms: ["Dị ứng", "Nhiễm trùng", "Đau gối", "Mệt mỏi", "Gối khua"], causes: "Vấn đề tuyến thượng thận.", nutrition: "Cam quýt, ớt xanh.", test: "Xoay chân vào trong, NTL kéo chân ra ngoài.", balance: "<b>- Khí (Cột sống):</b> L2-L4.<br><b>- Bạch huyết (NL):</b> Bụng dưới.<br><b>- Huyết (NV):</b> U thái dương.<br><b>- Huyệt:</b> Bổ(TW3-GB41, TW2-BL66), Tả(TW10-ST36, TW2-BL66).", related: "Cơ khép.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    {id: 30, name: "Cơ Dép (Soleus)", meridian: "Kinh Tam Tiêu / Tuyến thượng thận", organ: "Tuyến thượng thận", overview: "<b>- Nguyên ủy:</b> Chỏm và 1/4 trên xương mác, đường cơ dép.<br><b>- Bám tận:</b> Gân gót.", func: "Gấp gan bàn chân (kiễng chân).", symptoms: ["Dị ứng", "Hen suyễn", "Mệt mỏi", "Shock", "Vấn đề gót"], causes: "Mệt mỏi, shock.", nutrition: "Cam quýt, ớt xanh.", test: "Nằm sấp, gập gối 90°, NTL ấn lòng bàn chân.", balance: "<b>- Khí (Cột sống):</b> L1, L2.<br><b>- Bạch huyết (NL):</b> Bụng dưới.<br><b>- Huyết (NV):</b> U thái dương.<br><b>- Huyệt:</b> Bổ(TW3-GB41, TW2-BL66), Tả(TW10-ST36, TW2-BL66).", related: "Cơ bụng chân.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    {id: 31, name: "Cơ Bụng Chân (Gastrocnemius)", meridian: "Kinh Tam Tiêu / Tuyến thượng thận", organ: "Tuyến thượng thận", overview: "<b>- Nguyên ủy:</b> Lồi cầu ngoài và trong xương đùi.<br><b>- Bám tận:</b> Gân gót.", func: "Gấp cẳng chân, gấp gan bàn chân.", symptoms: ["Dị ứng", "Hen suyễn", "Mệt mỏi", "Cứng gối", "Shock"], causes: "Mệt mỏi, shock.", nutrition: "Cam quýt, ớt xanh.", test: "Nằm sấp, gập nhẹ gối, NTL ấn bắp chân để duỗi gối.", balance: "<b>- Khí (Cột sống):</b> L1, L2.<br><b>- Bạch huyết (NL):</b> Bụng dưới.<br><b>- Huyết (NV):</b> U thái dương.<br><b>- Huyệt:</b> Bổ(TW3-GB41, TW2-BL66), Tả(TW10-ST36, TW2-BL66).", related: "Cơ dép.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    // 10. CƠ TỪ KINH ĐỞM
+    {id: 32, name: "Cơ Delta Trước (Anterior Deltoid)", meridian: "Kinh Đởm / Mật", organ: "Mật", overview: "<b>- Nguyên ủy:</b> 1/3 ngoài bờ trước xương đòn.<br><b>- Bám tận:</b> Lồi delta xương cánh tay.", func: "Dạng, gấp, xoay trong vai.", symptoms: ["Vấn đề túi mật", "Đau đầu", "Vấn đề về vai", "Buồn ngủ sau khi ăn nhiều chất béo"], causes: "Ngộ độc, thức ăn dầu mỡ.", nutrition: "Cà rốt, rau mùi tây, Vitamin A.", test: "Nâng tay thẳng về trước < 45°, NTL nhấn xuống.", balance: "<b>- Khí (Cột sống):</b> T4.<br><b>- Bạch huyết (NL):</b> Gian sườn 5-6.<br><b>- Huyết (NV):</b> U thái dương.<br><b>- Huyệt:</b> Bổ(GB43-BL66, GB44-LI1), Tả(GB38-SI5, GB44-LI1).", related: "Cơ trám, cơ ngực lớn/bé, cơ lưng rộng, cơ dưới vai.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    {id: 33, name: "Cơ Khoeo (Popliteus)", meridian: "Kinh Đởm / Mật", organ: "Mật", overview: "<b>- Nguyên ủy:</b> Mặt ngoài lồi cầu ngoài xương đùi, sụn chêm ngoài.<br><b>- Bám tận:</b> Mặt sau xương chày.", func: "Gấp và xoay trong cẳng chân, giảm xóc gót chân.", symptoms: ["Đau gối", "Táo bón", "Vàng da", "Đau đầu", "Đầu gối không ổn định", "Duỗi gối quá mức"], causes: "Thức ăn dầu mỡ, lệch đốt sống cổ giữa, chấn thương duỗi gối.", nutrition: "Vitamin A, Betaine, Axit béo thiết yếu (Vitamin F), Muối mật.", test: "Co gối 90°, xoay cẳng chân vào trong, NTL kéo ra ngoài.", balance: "<b>- Khí (Cột sống):</b> T11, T12.<br><b>- Bạch huyết (NL):</b> Dọc đùi ngoài, khoang gian sườn 5-6 phải.<br><b>- Huyết (NV):</b> U thái dương, mặt trong gối.<br><b>- Huyệt:</b> Bổ(GB43-BL66, GB44-LI1), Tả(GB38-SI5, GB44-LI1).", related: "Cơ bụng chân, bó ngoài cơ đùi sau, cơ tứ đầu, cơ thang trên.", discussion: "Khi cơ khoeo yếu, sụn chêm ngoài thường có vấn đề. Yếu hai bên có thể do dính khớp ở đốt sống cổ giữa."},
+    // 11. CƠ TỪ KINH CAN
+    {id: 34, name: "Cơ Ngực Lớn Bó Ức (Pectoralis Major Sternal)", meridian: "Kinh Can / Gan", organ: "Gan", overview: "<b>- Nguyên ủy:</b> Xương ức, sụn sườn 1-7.<br><b>- Bám tận:</b> Mào củ lớn xương cánh tay.", func: "Khép, xoay trong, duỗi vai từ thế gập.", symptoms: ["Đau đầu", "Tăng nhãn áp", "Vấn đề về gan", "Sợ ánh sáng", "Ruồi bay"], causes: "Ngộ độc (rượu, khói thuốc).", nutrition: "Vitamin A, Muối mật, Choline, Inositol, Methionine, Taurine.", test: "Nâng tay thẳng về trước ngang vai, NTL kéo lên và ra ngoài.", balance: "<b>- Khí (Cột sống):</b> T5.<br><b>- Bạch huyết (NL):</b> Dưới vú phải (gian sườn 5-6).<br><b>- Huyết (NV):</b> U trán (trên rìa ngoài mắt).<br><b>- Huyệt:</b> Bổ(LV8-K10, LV4-LU8), Tả(LV2-H8, LV4-LU8).", related: "Cơ trám, bó trên và dưới cơ thang, cơ delta sau, cơ răng trước, cơ trên gai.", discussion: "Là cơ chỉ điểm tuyệt vời cho chức năng gan. Khi yếu, cơ trám đối kháng sẽ bị tăng trương lực thứ phát. Cần tăng cường cơ ngực trước, sau đó mới giãn cơ trám."},
+    {id: 35, name: "Cơ Trám (Rhomboids)", meridian: "Kinh Can / Gan (và Vị)", organ: "Gan", overview: "<b>- Nguyên ủy:</b> Mỏm gai C7-D5.<br><b>- Bám tận:</b> Bờ trong xương vai.", func: "Nâng, khép, xoay xương vai xuống.", symptoms: ["Vấn đề về gan", "Vấn đề về vai", "Đau đầu", "Đau giữa bả vai"], causes: "Ngộ độc (rượu, khói), yếu cơ răng trước.", nutrition: "Vitamin A, Choline, Inositol, Methionine.", test: "Co khuỷu tay sát sườn, NTL kéo ra ngoài và trước.", balance: "<b>- Khí (Cột sống):</b> T4, T5.<br><b>- Bạch huyết (NL):</b> Dưới vú phải; bên trái giữa xương sườn 6-7.<br><b>- Huyết (NV):</b> U trán.<br><b>- Huyệt:</b> Bổ(LV8-K10, LV4-LU8), Tả(LV2-H8, LV4-LU8).", related: "Cơ delta, cơ răng trước, cơ trên gai, cơ lưng rộng, cơ thang, cơ quạ cánh tay, cơ ngực lớn/bé.", discussion: "Khi cơ răng trước yếu, cơ trám đối kháng thường ngắn lại và tăng trương lực, gây đau giữa bả vai. Khi quá căng, chúng ức chế khả năng duỗi tay về trước (như khi ôm)."},
+    // 12. CƠ TỪ KINH PHẾ
+    {id: 36, name: "Cơ Răng Trước (Anterior Serratus)", meridian: "Kinh Phế / Phổi", organ: "Phổi", overview: "<b>- Nguyên ủy:</b> Bờ ngoài 8 xương sườn trên.<br><b>- Bám tận:</b> Bờ trong xương vai.", func: "Dạng và xoay xương vai lên, giữ xương vai áp vào lồng ngực.", symptoms: ["Khó thở", "Vấn đề về phổi", "Vấn đề về vai", "Xương bả vai nhô ra"], causes: "Lệch đốt sống cổ.", nutrition: "Vitamin C, Nước, Beta-carotene.", test: "Nâng thẳng tay về trước, NTL nhấn xuống.", balance: "<b>- Khí (Cột sống):</b> T3, T4.<br><b>- Bạch huyết (NL):</b> Gian sườn 3,4,5 hai bên.<br><b>- Huyết (NV):</b> U trán (Bregma).<br><b>- Huyệt:</b> Bổ(LU9-SP3, LU10-H8), Tả(LU5-K10, LU10-H8).", related: "Cơ trám, cơ ngực lớn (bó ức), cơ ngực bé, cơ thang giữa.", discussion: "Khi cơ này yếu, việc đẩy cánh tay thẳng về phía trước rất khó khăn. Nếu giữ vật nặng, bờ trong của xương bả vai sẽ nhô ra xa phía sau."},
+    {id: 37, name: "Cơ Quạ Cánh Tay (Coracobrachialis)", meridian: "Kinh Phế / Phổi", organ: "Phổi", overview: "<b>- Nguyên ủy:</b> Mỏm quạ xương vai.<br><b>- Bám tận:</b> Mặt trong thân xương cánh tay.", func: "Gấp và khép cánh tay.", symptoms: ["Ho mãn tính", "Vấn đề về phổi", "Đau vai"], causes: "Vấn đề hô hấp.", nutrition: "Ớt xanh, nước, cam quýt.", test: "Co khuỷu tối đa, tay hướng ra ngoài 45°, NTL ấn vào trong.", balance: "<b>- Khí (Cột sống):</b> T3.<br><b>- Bạch huyết (NL):</b> Gian sườn 3,4,5 hai bên.<br><b>- Huyết (NV):</b> U trán.<br><b>- Huyệt:</b> Bổ(LU9-SP3, LU10-H8), Tả(LU5-K10, LU10-H8).", related: "Cơ trên gai, cơ trám.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    {id: 38, name: "Cơ Delta (Giữa & Sau) (Middle/Posterior Deltoid)", meridian: "Kinh Phế / Phổi", organ: "Phổi", overview: "<b>- Nguyên ủy:</b> Xương đòn, mỏm cùng vai, gai vai.<br><b>- Bám tận:</b> Lồi củ delta xương cánh tay.", func: "Dạng, gập/duỗi, xoay trong/ngoài cánh tay.", symptoms: ["Viêm phế quản", "Cảm cúm", "Viêm phổi", "Vấn đề về vai"], causes: "Vấn đề hô hấp, lệch đốt sống C7-D1.", nutrition: "Vitamin C, RNA, Beta-carotene, Nước.", test: "Dang tay sang bên, co khuỷu, NTL ấn chỏ xuống.", balance: "<b>- Khí (Cột sống):</b> C5-C7.<br><b>- Bạch huyết (NL):</b> Gian sườn 3,4,5 hai bên (bó trước); T3-4 (bó sau).<br><b>- Huyết (NV):</b> U trán (Bregma).<br><b>- Huyệt:</b> Bổ(LU9-SP3, LU10-H8), Tả(LU5-K10, LU10-H8).", related: "Cơ trám, cơ ngực lớn/bé, cơ lưng rộng, cơ dưới vai.", discussion: "Yếu hai bên có thể chỉ ra rối loạn hạn chế khớp của đốt sống C7-D1. Yếu cơ thang dưới có thể che mờ điểm yếu của cơ delta, cần kiểm tra cơ thang dưới trước."},
+    {id: 39, name: "Cơ Hoành (Diaphragm)", meridian: "Kinh Phế / Phổi", organ: "Phổi", overview: "<b>- Nguyên ủy:</b> Mỏm mũi kiếm, 6 sụn sườn dưới, cột sống thắt lưng.<br><b>- Bám tận:</b> Trung tâm gân.", func: "Cơ chính của hoạt động thở.", symptoms: ["Khó thở", "Nấc cục", "Vấn đề tiêu hóa"], causes: "Căng thẳng, sai tư thế.", nutrition: "Ớt xanh, cam quýt.", test: "Hít sâu và giữ hơi (tối thiểu 40 giây).", balance: "<b>- Khí (Cột sống):</b> T3-T5.<br><b>- Bạch huyết (NL):</b> Dọc bờ sườn.<br><b>- Huyết (NV):</b> U trán.<br><b>- Huyệt:</b> Bổ(LU9-SP3, LU10-H8), Tả(LU5-K10, LU10-H8).", related: "Cơ thắt lưng chậu.", discussion: "Chi tiết về cơ này đang được cập nhật."},
+    // 13. CƠ TỪ KINH ĐẠI TRƯỜNG
+    {id: 40, name: "Cơ Căng Mạc Đùi (Tensor Fascia Lata)", meridian: "Kinh Đại Trường / Ruột già", organ: "Ruột già", overview: "<b>- Nguyên ủy:</b> Gai chậu trước trên, mép ngoài mào chậu.<br><b>- Bám tận:</b> Lồi cầu ngoài xương chày qua dải chậu-chày.", func: "Dạng, gập và xoay trong đùi, ổn định đầu gối.", symptoms: ["Chân vòng kiềng", "Viêm đại tràng", "Vấn đề tiêu hóa", "Đau lưng", "Táo bón", "Tiêu chảy"], causes: "Vấn đề đường ruột, thiếu máu do thiếu sắt.", nutrition: "L. Acidophilus, Cà ri, Comfrey, Axit Folic, Vitamin D, Sắt (nếu yếu hai bên).", test: "Dang chân 45°, xoay vào trong, NTL nhấn xuống và vào trong.", balance: "<b>- Khí (Cột sống):</b> L2, L3.<br><b>- Bạch huyết (NL):</b> Dải rộng dọc đùi ngoài.<br><b>- Huyết (NV):</b> U thái dương, u đỉnh sau.<br><b>- Huyệt:</b> Bổ(LI11-ST36, LI5-SI5), Tả(LI2-BL66, LI5-SI5).", related: "Cơ khép, cơ mông nhỡ, cơ mông lớn, cơ gân kheo.", discussion: "Thường liên quan đến vấn đề đại tràng. Yếu hai bên thường là dấu hiệu thiếu máu do thiếu sắt. Việc xoa bóp điểm phản xạ theo chiều nhu động ruột (phải lên, ngang, xuống trái) có thể hiệu quả."},
+    {id: 41, name: "Cơ Gân Kheo (Hamstring)", meridian: "Kinh Đại Trường / Ruột già", organ: "Ruột già", overview: "<b>- Nguyên ủy:</b> Mào dưới ụ ngồi.<br><b>- Bám tận:</b> Lồi cầu trong xương chày, ngoài và sau cẳng chân.", func: "Gấp gối và duỗi hông.", symptoms: ["Viêm đại tràng", "Táo bón", "Trĩ", "Đau đầu", "Vấn đề về gối"], causes: "Ngộ độc, vấn đề cấu trúc xương chậu.", nutrition: "Vitamin E, F. Canxi, Magie, Betaine (nếu chuột rút).", test: "Nằm sấp, co gối > 90°, NTL ấn gân Achilles để duỗi chân.", balance: "<b>- Khí (Cột sống):</b> Xương cùng.<br><b>- Bạch huyết (NL):):</b> Dọc đùi ngoài; gần mấu chuyển bé.<br><b>- Huyết (NV):</b> U thái dương, trên đường khớp cách thóp sau 2.5cm.<br><b>- Huyệt:</b> Bổ(LI11-ST36, LI5-SI5), Tả(LI2-BL66, LI5-SI5).", related: "Cơ dựng sống, cơ lưng rộng đối bên, cơ tứ đầu, cơ khoeo.", discussion: "Là cơ cố định chính phía sau xương chậu. Khi yếu, xương chậu nghiêng về phía trước, làm tăng độ cong thắt lưng (võng)."},
+    {id: 42, name: "Cơ Vuông Thắt Lưng (Quadratus Lumborum)", meridian: "Kinh Đại Trường / Ruột già", organ: "Ruột già", overview: "<b>- Nguyên ủy:</b> Dây chằng thắt lưng chậu, mào chậu.<br><b>- Bám tận:</b> Bờ dưới xương sườn D12, mỏm ngang đốt sống thắt lưng.", func: "Duỗi và nghiêng ngoài cột sống.", symptoms: ["Đau lưng", "Viêm đại tràng"], causes: "Sai tư thế.", nutrition: "Vitamin E, A, C.", test: "Đứng nghiêng hông, NTL nhấn hông và vai đối diện vào giữa.", balance: "<b>- Khí (Cột sống):</b> L1-L4.<br><b>- Bạch huyết (NL):):</b> Dọc đùi ngoài.<br><b>- Huyết (NV):):</b> U thái dương.<br><b>- Huyệt:</b> Bổ(LI11-ST36, LI5-SI5), Tả(LI2-BL66, LI5-SI5).", related: "Cơ thắt lưng chậu.", discussion: "Chi tiết về cơ này đang được cập nhật."}
+];
+
+// Dữ liệu lý thuyết hợp nhất
+const theoryData = [
+    {
+        category: "Kiến thức Nền tảng Applied Kinesiology",
+        items: [
+            { id: 't7', title: 'Giải phẫu và Sinh lý của Cơ', content: `<b>Sinh học</b> là khoa học nghiên cứu về sự sống. <b>Giải phẫu</b> là nghiên cứu về cấu trúc của sinh vật. <b>Sinh lý</b> là nghiên cứu về chức năng và hoạt động của sinh vật.<br><br>Trong mỗi bó cơ có các sợi cơ nhỏ chứa sợi <b>actin và myosin</b>. Khi não gửi tín hiệu, các sợi này trượt vào nhau, làm cơ co lại. Các bó cơ hợp lại thành gân để gắn vào xương.<br><br><b>Dây chằng</b> là mô tương tự gân, nối các xương lại với nhau, cung cấp sự ổn định cho khớp.<br><br>Có hai loại sợi cơ: <b>co chậm</b> (sức bền) và <b>co nhanh</b> (bùng nổ năng lượng). Cả hai đều dùng ATP làm năng lượng.` },
+            { id: 't8', title: 'Sinh lý thần kinh: Hệ thần kinh', content: `<b>Hệ thần kinh trung ương (CNS)</b> gồm não và tủy sống. Nhiệm vụ chính là duy trì cân bằng nội môi và giúp cơ thể thích nghi với môi trường.<br><br>Giao tiếp trong CNS có 2 con đường:<br>1. <b>Hóa học (Hormone):</b> Chậm, do vùng dưới đồi và tuyến yên kiểm soát, phù hợp cho các chức năng dài hạn.<br>2. <b>Điện (Xung thần kinh):</b> Nhanh, cho phép phản ứng tức thời như 'chiến đấu hay bỏ chạy'. Tín hiệu truyền qua các tế bào thần kinh (neuron) tại khớp thần kinh (synapse). Sự cạn kiệt hóa chất ở synapse có thể gây mệt mỏi tinh thần.` },
+            { id: 't9', title: 'Các thụ thể thần kinh', content: `Các thụ thể thần kinh thu thập thông tin và gửi về CNS. Nhóm quan trọng là <b>thụ thể cảm thụ bản thể (proprioceptors)</b>, phản ứng với các kích thích bên trong cơ thể.<br><br>Ba nhóm chính:<br>1. <b>Proprioceptors ở dây chằng, khớp, da.</b><br>2. <b>Proprioceptors ở cổ và tai trong:</b> Giúp não xác định vị trí và chuyển động của đầu.<br>3. <b>Thụ thể ở cơ:</b> Gồm <b>Tế Bào Thần Kinh Trục cơ</b> (giám sát độ dài cơ) và <b>Cơ quan gân Golgi</b> (giám sát sức căng cơ). Sự tương tác giữa chúng giúp điều chỉnh trương lực và phối hợp chuyển động.` },
+            { id: 't10', title: 'Tư thế và Hệ Thần Kinh Trung Ương', content: `Nếu các thụ thể cảm thụ vị trí bị rối loạn, chúng sẽ gửi thông tin sai lệch đến CNS. CNS phản ứng lại bằng cách gửi tín hiệu không chính xác đến cơ, dẫn đến một số cơ quá căng (tăng trương lực), một số quá lỏng (giảm trương lực), gây ra tư thế sai. Đây là nguyên tắc "Rác vào, rác ra".<br><br>Tư thế xấu thường là thói quen. Việc cố gắng "ngồi thẳng lưng" một cách có ý thức thường không bền vững. Thay đổi lâu dài đòi hỏi phải điều chỉnh lại tín hiệu từ các thụ thể cảm thụ. Các kỹ thuật của AK nhằm phá vỡ chuỗi phản ứng sai này.` },
+            { id: 't11', title: 'Stress và Vận động học ứng dụng', content: `<b>Stress</b> là "phản ứng không đặc hiệu của cơ thể trước bất kỳ yêu cầu nào".<br><br>Hệ thống thích nghi tổng quát (GAS) có 3 pha:<br>1. <b>Phản ứng Báo Động:</b> Sốc ban đầu, khả năng phản ứng giảm.<br>2. <b>Trạng thái Kháng cự:</b> Nếu stress tiếp tục, cơ thể tăng khả năng thích nghi (sản sinh cortisone, adrenaline).<br>3. <b>Trạng thái Kiệt sức:</b> Nếu stress kéo dài, dự trữ cơ thể cạn kiệt.<br><br>Trong AK, ba trạng thái này tương ứng với phản ứng của cơ: kiểm tra yếu (báo động), trương lực bình thường (cân bằng), và tăng trương lực (kháng cự).` }
+        ]
+    },
+    {
+        category: "Kiểm tra và Chẩn đoán",
+        items: [
+            { id: 't17', title: 'Lý thuyết và quy trình kiểm tra cơ', content: `Kiểm tra cơ trong AK là một bài kiểm tra sức mạnh, đòi hỏi kích hoạt toàn bộ cơ. Người khám tạo một lực đối kháng tương đương với lực co của bệnh nhân.<br><br>Phần quan trọng là khi cơ đã đạt cường độ co tối đa, người khám sẽ <b>ấn thêm một chút (chỉ 2-5%)</b>. Khả năng cơ thể huy động năng lượng dự trữ để chống lại lực ấn thêm này quyết định kết quả "khỏe" (giữ vững) hay "yếu" (bị chế ngự).<br><br>Một cơ "kiểm tra yếu" không hẳn là yếu về thể chất, mà thường do sự cố trong mạch thần kinh và có thể được tăng cường gần như ngay lập tức.` },
+            { id: 't19', title: 'Ứng dụng kiểm tra cơ', content: `Có hai ứng dụng chính:<br>1. <b>Kiểm tra "sạch":</b> Đánh giá tính toàn vẹn chức năng của chính cơ đó và các mạch thần kinh liên quan. Đây là cách dùng trong y học chính thống để kiểm tra tổn thương thần kinh.<br>2. <b>Kiểm tra cơ chỉ báo:</b> Sử dụng một cơ đã được xác định là hoạt động bình thường làm "chỉ báo" để đánh giá phản ứng của cơ thể đối với các kích thích khác (thử thách). Ví dụ, một chất gây dị ứng trong miệng có thể làm cơ chỉ báo mạnh trở nên yếu.` },
+            { id: 't20', title: 'Thử thách (Challenge)', content: `Thử thách là một công cụ chẩn đoán của AK để kiểm tra phản ứng của cơ thể với các kích thích (cấu trúc, hóa học, tâm lý).<br><br>- Một thử thách có tính <b>khắc phục</b> (ví dụ: một chất dinh dưỡng cần thiết) sẽ làm một cơ yếu trở nên bình thường.<br>- Một thử thách có tính <b>tiêu cực</b> (một yếu tố gây căng thẳng) sẽ làm suy yếu một cơ bình thường.<br><br>Thử thách giúp người khám phá khám phá các yếu tố cơ bản và biện pháp khắc phục.` },
+            { id: 't24', title: 'Chuyên biệt hoá trị liệu theo khu vực (TL)', content: `<b>Therapy Localization (TL)</b> là một hiện tượng được Goodheart phát hiện: Nếu bệnh nhân chạm vào một vùng cơ thể có vấn đề, cơ chỉ báo bình thường trước đó sẽ yếu đi.<br><br>Đây là một kỹ thuật <b>chẩn đoán</b>, không phải trị liệu. Nó không chỉ ra *vấn đề là gì*, mà chỉ cho biết *vấn đề ở đâu*. TL có thể được dùng để xác định phương pháp điều trị hiệu quả. Ví dụ, nếu cơ yếu trở nên mạnh khi bệnh nhân chạm vào một điểm phản xạ, thì việc xoa bóp điểm đó được chỉ định.` },
+            { id: 't26', title: 'Đánh giá ban đầu (Pre-tests)', content: `Trước khi một cơ được dùng làm cơ chỉ báo, nó phải được "hiệu chuẩn" để đảm bảo hệ thống thần kinh hoạt động có tổ chức. Các bước chính:<br><br><b>a. Mất nước:</b> Đảm bảo cả người khám và bệnh nhân đều uống đủ nước.<br><b>b. Tìm cơ mạnh:</b> Tìm một cơ chỉ báo kiểm tra mạnh.<br><b>c. Kiểm tra khả năng yếu đi:</b> Kiểm tra xem cơ mạnh có thể bị ức chế (yếu đi) bằng kỹ thuật tiêu chuẩn không. Nếu không, nó là cơ <b>tăng trương lực</b>.<br><b>d. Rối loạn tín hiệu thần kinh:</b> Kiểm tra và điều chỉnh các vấn đề như "khóa thị giác" (ocular lock) và "chuyển đổi" (switching) bằng các điểm TL cụ thể (ví dụ: K27, rốn).` }
+        ]
+    },
+    {
+        category: "Các Kỹ Thuật Cân Bằng Cơ Bản",
+        items: [
+            { id: 't29', title: 'Kỹ thuật chèn gốc (Origin & Insertion)', content: `Đây là kỹ thuật đầu tiên của Goodheart để tăng cường cơ yếu. Kỹ thuật này được chỉ định khi một cơ kiểm tra yếu và có các <b>khối u nhỏ, dạng hạt</b> có thể sờ thấy ở nơi gân bám vào xương (nguyên ủy hoặc bám tận). Người ta tin rằng đây là những vết rách vi mô của gân khỏi màng xương.<br><br><b>Điều trị:</b> Ấn mạnh và xoa bóp các khối u này để ấn và xoa gân trở lại phần bám vào xương. Cơ yếu thường sẽ mạnh lên sau khi điều trị thành công.` },
+            { id: 't30', title: 'Phản xạ thần kinh bạch huyết (NL)', content: `Goodheart khám phá ra rằng việc xoa bóp các <b>điểm phản xạ Thần kinh Bạch huyết (Neurolymphatic - NL)</b> do Frank Chapman vạch ra cũng có thể tăng cường các cơ yếu. Các điểm này được cho là kích thích dẫn lưu bạch huyết từ các mô và cơ quan tương ứng.<br><br>Hệ bạch huyết loại bỏ chất thải. Tắc nghẽn bạch huyết có thể gây phù nề và suy giảm chức năng. Nếu TL đến một điểm NL làm cơ yếu trở nên mạnh, thì việc xoa bóp điểm đó được chỉ định.` },
+            { id: 't31', title: 'Phản xạ thần kinh mạch máu (NV)', content: `Dựa trên công trình của Terrence Bennett, Goodheart đã sử dụng các <b>điểm phản xạ Thần kinh Mạch máu (Neurovascular - NV)</b> để tăng cường cơ yếu. Những điểm này, chủ yếu nằm trên đầu, khi được giữ và kéo nhẹ nhàng, được cho là ảnh hưởng đến sự lưu thông mạch máu ở các vùng xa của cơ thể.<br><br>Kỹ thuật này liên quan đến việc tìm hướng kéo tạo ra nhịp đập mạnh nhất và giữ nó trong ít nhất 20 giây. Nếu TL đến một điểm NV làm cơ yếu trở nên mạnh, thì việc kích thích điểm đó được chỉ định.` },
+            { id: 't36', title: 'Cơ phản ứng', content: `Cơ phản ứng là tình trạng co bóp của một cơ (cơ <b>"chính"</b>, thường bị tăng trương lực hoặc từng bị chấn thương) gây ra sự yếu đi của một cơ khác (cơ <b>"phản ứng"</b>). Ví dụ, siết chặt cơ thang trên có thể làm yếu đi cơ lưng rộng.<br><br><b>Chẩn đoán:</b> Tăng cường cả hai cơ để chúng kiểm tra mạnh. Sau đó, co cơ chính và ngay lập tức kiểm tra lại cơ phản ứng. Nếu cơ phản ứng yếu đi, mối quan hệ này được xác nhận.<br><br><b>Điều trị:</b> Thường liên quan đến việc làm thư giãn các thụ thể cảm thụ trong cơ chính trong khi kích hoạt cơ phản ứng.` },
+            { id: 't70', title: 'Bảng tương quan Kinh mạch - Cơ - Cơ quan', content: `Bảng này tóm tắt mối liên hệ cốt lõi trong AK/TFH giữa các kinh mạch, các cơ cụ thể và các cơ quan/tuyến tương ứng. Đây là cầu nối giữa y học phương Đông và phương Tây.<br><ul><li><b>Mạch Nhâm:</b> Cơ trên gai - Não</li><li><b>Mạch Đốc:</b> Cơ tròn lớn - Cột sống</li><li><b>Dạ dày:</b> Cơ ngực lớn (bó đòn), Cơ nâng vai, Cơ gấp cổ - Dạ dày, Xoang</li><li><b>Tỳ:</b> Cơ lưng rộng, Cơ thang (giữa, dưới), Cơ tam đầu - Tụy, Lá lách</li><li><b>Tâm:</b> Cơ dưới vai, Cơ dưới đòn - Tim</li><li><b>Tiểu Trường:</b> Cơ tứ đầu đùi, Cơ thẳng bụng - Ruột non</li><li><b>Bàng quang:</b> Nhóm cơ mác, Cơ dựng sống, Cơ chày trước/sau - Bàng quang</li><li><b>Thận:</b> Cơ thắt lưng chậu, Cơ thang trên - Thận, Tai & Mắt, Van hồi manh tràng</li><li><b>Tâm Bào:</b> Nhóm cơ mông, Các cơ khép, Cơ hình lê - Cơ quan sinh dục</li><li><b>Tam Tiêu:</b> Cơ tròn bé, Cơ may, Cơ bụng chân, Cơ dép - Tuyến giáp, Tuyến thượng thận</li><li><b>Đởm:</b> Cơ Delta trước, Cơ khoeo - Túi mật</li><li><b>Can:</b> Cơ ngực lớn (bó ức), Cơ trám - Gan</li><li><b>Phế:</b> Cơ răng trước, Cơ quạ cánh tay, Cơ Delta - Phổi</li><li><b>Đại Trường:</b> Cơ căng mạc đùi, Cơ Hamstring, Cơ vuông thắt lưng - Ruột già</li></ul>`},
+        ]
+    },
+    {
+        category: "Chương trình Touch for Health",
+        items: [
+            { title: "Level 1: Nền tảng", content: `
+                <p>Học các khái niệm cơ bản, 14 nhóm cơ chính, các kỹ thuật khởi động và cân bằng năng lượng đơn giản (dẫn lưu bạch huyết, phản xạ gai sống, NL, NV, nguyên ủy-bám tận...).</p>
+                <ul>
+                    <li><strong>Kiến thức nền tảng sinh cơ học:</strong> Giới thiệu nguyên tắc cơ bản của Applied Kinesiology.</li>
+                    <li><strong>Ứng dụng học thuyết Âm dương ngũ hành:</strong> Đặc biệt là Ngũ du huyệt.</li>
+                    <li><strong>Kỹ thuật khởi động:</strong> Trước khi kiểm tra và cân bằng cơ.</li>
+                    <li><strong>Kiểm tra 14 nhóm cơ:</strong> Cùng với chức năng, cơ quan và đường kinh liên quan.</li>
+                    <li><strong>6 hệ thống cân bằng khí huyết/năng lượng.</strong></li>
+                    <li><strong>Kỹ thuật xử lý đau cấp:</strong> Giảm đau lưng, mỏi cổ vai gáy, đau đầu, chuột rút cơ.</li>
+                    <li><strong>Kỹ thuật xóa đi tổn thương cơ.</strong></li>
+                </ul>`
+            },
+            { title: "Level 2: Mở rộng", content: `
+                <p>Kiểm tra 28 nhóm cơ, thiết lập mục tiêu trị liệu, phân tích phản xạ dáng đi, xử lý rối loạn tiềm ẩn và các vấn đề tâm lý.</p>
+                <ul>
+                    <li><strong>Kiểm tra 28 nhóm cơ.</strong></li>
+                    <li><strong>Kỹ thuật thiết lập mục tiêu trị liệu.</strong></li>
+                    <li><strong>Phương pháp xác định nhanh những phản xạ đáp ứng mất cân bằng.</strong></li>
+                    <li><strong>Kỹ thuật bổ/tả khí huyết giữa các đường kinh bằng Ngũ du huyệt.</strong></li>
+                    <li><strong>Phân tích phản xạ dáng đi.</strong></li>
+                    <li><strong>Kỹ thuật xác định và xử lý những rối loạn dẫn truyền thần kinh.</strong></li>
+                    <li><strong>Kỹ thuật tác động xương Thái dương:</strong> Để loại bỏ các rối loạn có nguồn gốc từ những ức chế tâm lý.</li>
+                    <li><strong>Kỹ thuật phát hiện đốt sống bị lệch.</strong></li>
+                    <li><strong>Kỹ thuật cân bằng bằng sử dụng thực phẩm và kết nối 2 bán cầu não.</strong></li>
+                </ul>`
+            },
+            { title: "Level 3: Chuyên sâu", content: `
+                <p>Kiểm tra 42 nhóm cơ, sử dụng đồ hình bánh xe, cân bằng cảm xúc bằng ngũ hành, xử lý các vấn đề cấu trúc phức tạp (màng cứng tủy sống, khớp thái dương hàm, khung chậu).</p>
+                <ul>
+                    <li><strong>Kiểm tra 42 nhóm cơ.</strong></li>
+                    <li><strong>Sử dụng mô huyệt kiểm tra đường kinh dự năng lượng.</strong></li>
+                    <li><strong>Xử lý những vấn đề rối loạn về cảm xúc/Tinh chí bằng ngũ hành.</strong></li>
+                    <li><strong>Van hồi manh tràng & Van Houston:</strong> Tìm và điều chỉnh những cấu trúc quan trọng trong đường tiêu hóa.</li>
+                    <li><strong>Kỹ thuật cân bằng màng cứng của tủy sống.</strong></li>
+                    <li><strong>Kỹ thuật điều chỉnh tuyến thượng thận.</strong></li>
+                    <li><strong>Thoát vị hoành và rối loạn khớp thái dương hàm.</strong></li>
+                    <li><strong>Kỹ thuật điều chỉnh 3 loại rối loạn khung chậu.</strong></li>
+                    <li><strong>Kỹ thuật dẫn lưu bạch huyết.</strong></li>
+                </ul>`
+            },
+            { title: "Level 4: Tổng hợp & Tối ưu", content: `
+                <p>Tổng hợp kỹ thuật trên 42 cơ trong các tư thế, xử lý các vấn đề mãn tính, nguyên nhân gốc rễ, và cân bằng năng lượng luân xa.</p>
+                <ul>
+                    <li><strong>Tổng hợp kỹ thuật kiểm tra 42 nhóm cơ trong các tư thế.</strong></li>
+                    <li><strong>Kỹ thuật nhanh chóng xác định và xử lý rối loạn năng lượng của 2 mạch Nhâm Đốc.</strong></li>
+                    <li><strong>Kỹ thuật xử lý tạm thời ổn định huyết áp và các rối loạn giấc ngủ.</strong></li>
+                    <li><strong>Kỹ thuật xử lý cơn đau gốc.</strong></li>
+                    <li><strong>Kỹ thuật xác định các vấn đề tắc nghẽn bạch huyết.</strong></li>
+                    <li><strong>Kỹ thuật xử lý 15 vấn đề thường gặp:</strong> Như viêm khớp, suyễn, tụt đường huyết, dị ứng...</li>
+                    <li><strong>Cân bằng năng lượng luân xa:</strong> Để xử lý rối loạn 7 trung tâm năng lượng (luân xa) thông qua âm thanh & màu sắc.</li>
+                </ul>`
+            }
+        ]
+    }
+];
+
+// ===================================================================================
+// LOGIC CHÍNH CỦA ỨNG DỤNG
+// ===================================================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize all tabs
+    initOverviewTab();
+    initLibraryTab();
+    initProtocolTab();
+    initTheoryTab();
+
+    // Tab switching logic
+    const tabs = document.querySelectorAll('.tab-button');
+    const contents = document.querySelectorAll('.tab-content');
+    
+    const switchTab = (tabId) => {
+        tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.tab === tabId));
+        contents.forEach(content => content.classList.toggle('active', content.id === tabId));
+    };
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+
+    // Default to overview tab
+    switchTab('overview');
+});
+
+// --- INITIALIZATION FUNCTIONS ---
+
+function initOverviewTab() {
+    // Chart 1: Meridian Distribution
+    const meridianCounts = masterDatabase.reduce((acc, { meridian }) => {
+        const mainMeridian = meridian.split('/')[0].trim();
+        acc[mainMeridian] = (acc[mainMeridian] || 0) + 1;
+        return acc;
+    }, {});
+    
+    new Chart(document.getElementById('meridian-chart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(meridianCounts),
+            datasets: [{
+                data: Object.values(meridianCounts),
+                backgroundColor: ['#14B8A6', '#0891B2', '#F97316', '#FBBF24', '#EF4444', '#EC4899', '#8B5CF6', '#6366F1', '#3B82F6', '#06B6D4', '#22C55E', '#84CC16', '#EAB308', '#6B7280'],
+                borderColor: '#f8fafc',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { position: 'right', labels: { font: { family: "'Be Vietnam Pro', sans-serif" } } },
+                tooltip: { callbacks: { title: (tooltipItems) => {
+                    const item = tooltipItems[0];
+                    let label = item.chart.data.labels[item.dataIndex];
+                    return Array.isArray(label) ? label.join(' ') : label;
+                } } }
+            }
+        }
+    });
+
+    // Chart 2: Top Symptoms
+    const symptomMap = masterDatabase.reduce((acc, muscle) => {
+        if(muscle.symptoms) muscle.symptoms.forEach(symptom => {
+            if (!acc[symptom]) acc[symptom] = 0;
+            acc[symptom]++;
+        });
+        return acc;
+    }, {});
+
+    const symptomCounts = Object.entries(symptomMap).map(([symptom, count]) => ({ symptom, count }));
+    symptomCounts.sort((a, b) => b.count - a.count);
+    const topSymptoms = symptomCounts.slice(0, 10).reverse();
+
+    new Chart(document.getElementById('top-symptoms-chart'), {
+        type: 'bar',
+        data: {
+            labels: topSymptoms.map(s => s.symptom),
+            datasets: [{
+                label: 'Số cơ liên quan',
+                data: topSymptoms.map(s => s.count),
+                backgroundColor: '#f59e0b',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: { 
+                legend: { display: false },
+                tooltip: { callbacks: { title: (tooltipItems) => {
+                    const item = tooltipItems[0];
+                    let label = item.chart.data.labels[item.dataIndex];
+                    return Array.isArray(label) ? label.join(' ') : label;
+                } } }
+            }
+        }
+    });
+}
+
+function initLibraryTab() {
+    const muscleListEl = document.getElementById('muscle-list');
+    const libraryDetailEl = document.getElementById('library-detail');
+    const librarySearchEl = document.getElementById('library-search');
+
+    const renderMuscleList = (filter = '') => {
+        muscleListEl.innerHTML = '';
+        const filtered = masterDatabase.filter(m => m.name.toLowerCase().includes(filter.toLowerCase()));
+        filtered.forEach(muscle => {
+            const item = document.createElement('div');
+            item.className = 'p-3 cursor-pointer hover:bg-teal-50 border-b border-slate-100';
+            item.textContent = `${muscle.id}. ${muscle.name}`;
+            item.onclick = () => {
+                document.querySelectorAll('#muscle-list div').forEach(div => div.classList.remove('bg-teal-100', 'font-semibold'));
+                item.classList.add('bg-teal-100', 'font-semibold');
+                renderLibraryDetail(muscle.id);
+            };
+            muscleListEl.appendChild(item);
+        });
+    };
+
+    const renderLibraryDetail = (muscleId) => {
+        const muscle = masterDatabase.find(m => m.id === muscleId);
+        if (!muscle) return;
+        libraryDetailEl.innerHTML = `
+            <div class="protocol-card w-full h-full overflow-y-auto prose max-w-none prose-p:my-1 prose-strong:font-semibold">
+                <h2 class="text-2xl font-bold text-teal-700 !mt-0">${muscle.id}. ${muscle.name}</h2>
+                <p class="text-sm text-slate-500 !-mt-2 mb-4">${muscle.meridian}</p>
+                ${muscle.discussion ? `<h3>1. Bàn Luận (Từ tài liệu AK)</h3><p>${muscle.discussion}</p>` : ''}
+                <h3>${muscle.discussion ? '2' : '1'}. Tổng Quát</h3><p>${muscle.overview}</p>
+                <h3>${muscle.discussion ? '3' : '2'}. Chức năng</h3><p>${muscle.func}</p>
+                <h3>${muscle.discussion ? '4' : '3'}. Triệu chứng liên quan</h3><p>${muscle.symptoms.join(', ')}</p>
+                <h3>${muscle.discussion ? '5' : '4'}. Nguyên nhân tiềm ẩn</h3><p>${muscle.causes}</p>
+                <h3>${muscle.discussion ? '6' : '5'}. Dinh dưỡng</h3><p>${muscle.nutrition}</p>
+                <h3>${muscle.discussion ? '7' : '6'}. Test cơ</h3><p>${muscle.test}</p>
+                <h3>${muscle.discussion ? '8' : '7'}. Cân bằng Năng lượng</h3><p>${muscle.balance}</p>
+                <h3>${muscle.discussion ? '9' : '8'}. Cơ tương hỗ/phản ứng</h3><p>${muscle.related}</p>
+            </div>
+        `;
+    };
+
+    librarySearchEl.addEventListener('input', (e) => renderMuscleList(e.target.value));
+    renderMuscleList();
+}
+
+function initProtocolTab() {
+    const symptomTagsContainer = document.getElementById('symptom-tags');
+    const symptomSearch = document.getElementById('symptom-search');
+    const diagnosticResults = document.getElementById('diagnostic-results');
+    let selectedSymptoms = new Set();
+
+    const symptomMap = masterDatabase.reduce((acc, muscle) => {
+        if (muscle.symptoms) {
+            muscle.symptoms.forEach(symptom => {
+                if (!acc[symptom]) acc[symptom] = [];
+                acc[symptom].push(muscle.id);
+            });
+        }
+        return acc;
+    }, {});
+    const allSymptoms = Object.keys(symptomMap).sort();
+
+    const renderSymptomTags = (filter = '') => {
+        symptomTagsContainer.innerHTML = '';
+        const filtered = allSymptoms.filter(s => s.toLowerCase().includes(filter.toLowerCase()));
+        filtered.forEach(symptom => {
+            const tag = document.createElement('span');
+            tag.className = 'symptom-tag px-3 py-1 bg-slate-200 text-slate-700 rounded-full text-sm';
+            tag.textContent = symptom;
+            if (selectedSymptoms.has(symptom)) {
+                tag.classList.add('selected');
+            }
+            tag.onclick = () => {
+                if (selectedSymptoms.has(symptom)) {
+                    selectedSymptoms.delete(symptom);
+                    tag.classList.remove('selected');
+                } else {
+                    selectedSymptoms.add(symptom);
+                    tag.classList.add('selected');
+                }
+                renderDiagnosticResults();
+            };
+            symptomTagsContainer.appendChild(tag);
+        });
+    };
+
+    const renderDiagnosticResults = () => {
+        if (selectedSymptoms.size === 0) {
+            diagnosticResults.innerHTML = '<p class="text-slate-400 text-center py-12">Chưa có triệu chứng nào được chọn.</p>';
+            return;
+        }
+
+        const muscleScores = {};
+        selectedSymptoms.forEach(symptom => {
+            if (symptomMap[symptom]) {
+                symptomMap[symptom].forEach(muscleId => {
+                    if (!muscleScores[muscleId]) {
+                        muscleScores[muscleId] = { score: 0, matchedSymptoms: [] };
+                    }
+                    muscleScores[muscleId].score++;
+                    muscleScores[muscleId].matchedSymptoms.push(symptom);
+                });
+            }
+        });
+
+        const sortedMuscles = Object.entries(muscleScores)
+            .map(([id, data]) => ({ id: parseInt(id), ...data }))
+            .sort((a, b) => b.score - a.score || a.id - b.id);
+
+        diagnosticResults.innerHTML = sortedMuscles.map(item => {
+            const muscle = masterDatabase.find(m => m.id === item.id);
+            if (!muscle) return '';
+            return `
+                <div class="border border-slate-200 rounded-lg bg-white overflow-hidden">
+                    <details class="group">
+                        <summary class="p-4 cursor-pointer flex justify-between items-center hover:bg-slate-50">
+                            <div>
+                                <h4 class="font-semibold text-teal-700 !m-0">${muscle.name}</h4>
+                                <p class="text-sm text-slate-500 !m-0">Phù hợp với <strong>${item.score}</strong> triệu chứng: ${item.matchedSymptoms.join(', ')}</p>
+                            </div>
+                            <span class="text-teal-500 group-open:rotate-90 transition-transform duration-200 text-xl">▸</span>
+                        </summary>
+                        <div class="p-4 border-t border-slate-200 bg-slate-50 prose-custom">
+                            <h3>Phác Đồ Cân Bằng & Dinh Dưỡng</h3>
+                            <p><strong>Cân bằng năng lượng:</strong><br>${muscle.balance}</p>
+                            <p><strong>Dinh dưỡng:</strong><br>${muscle.nutrition}</p>
+                            <p><a href="#" class="text-teal-600 hover:text-teal-800 no-underline text-sm font-semibold" onclick="event.preventDefault(); document.querySelector('.tab-button[data-tab=library]').click(); document.getElementById('library-search').value='${muscle.name}'; document.getElementById('library-search').dispatchEvent(new Event('input')); setTimeout(() => document.querySelector('#muscle-list div').click(), 100);">Xem chi tiết đầy đủ trong thư viện →</a></p>
+                        </div>
+                    </details>
+                </div>
+            `;
+        }).join('');
+    };
+
+    symptomSearch.addEventListener('input', (e) => renderSymptomTags(e.target.value));
+    renderSymptomTags();
+}
+
+function initTheoryTab() {
+    const accordionContainer = document.getElementById('theory-accordion');
+    accordionContainer.innerHTML = theoryData.map(category => `
+        <div class="mb-4 border border-slate-200 rounded-lg">
+            <h3 class="text-xl font-semibold text-teal-700 p-4 !m-0">${category.category}</h3>
+            <div class="border-t border-slate-200">
+                ${category.items.map(item => `
+                    <details class="group">
+                        <summary class="p-4 cursor-pointer hover:bg-slate-50 font-semibold flex justify-between">
+                            ${item.title}
+                            <span class="text-teal-500 group-open:rotate-90 transition-transform duration-200">▸</span>
+                        </summary>
+                        <div class="p-4 border-t border-slate-100 bg-slate-50">
+                            ${item.content}
+                        </div>
+                    </details>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+</script>
+</body>
+</html>
